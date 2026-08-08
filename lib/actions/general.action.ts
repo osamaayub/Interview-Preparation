@@ -4,6 +4,7 @@ import { feedbackSchema } from "@/constants";
 import { db } from "@/firebase/admin";
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
+import { toast } from "sonner";
 
 export async function getInterviewById(
   interviewId: string
@@ -71,14 +72,15 @@ export async function createFeedback(params: CreateFeedbackParams) {
       success: true,
       feedbackId: feedback.id,
     };
-  } catch (err) {
-    console.error("Error saving feedback: ", err);
+  } catch (err:unknown) {
+    toast.error(  `Error saving feedback:${err} `);
     return {
       success: false,
       feedbackId: null,
     };
   }
 }
+
 
 export async function getFeedbackByInterviewId(
   params: GetFeedbackByInterviewIdParams
@@ -101,4 +103,39 @@ export async function getFeedbackByInterviewId(
     id: feedbackDoc.id,
     ...feedbackDoc.data()
   } as Feedback
+}
+
+export async function getLatestInterviews(
+  params: GetLatestInterviewsParams
+): Promise<Interview[]> {
+  const { userId, limit = 20 } = params;
+
+  const interviews = await db
+    .collection("interviews")
+    .where("finalized", "==", true)
+.orderBy("createdAt", "asc")  // Change to ascending
+.limit(limit + 1)
+.get();
+
+  return interviews.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .filter((interview) => interview?.id !== userId)
+    .slice(0, limit) as Interview[];
+}
+export async function getInterviewsByUserId(
+  userId: string
+): Promise<Interview[] | null> {
+  const interviews = await db
+    .collection("interviews")
+    .where("userId", "==", userId)
+    .orderBy("createdAt", "desc")
+    .get();
+
+  return interviews.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Interview[];
 }

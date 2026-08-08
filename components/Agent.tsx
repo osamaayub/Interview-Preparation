@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { vapi } from "@/lib/vapi.sdk";
 import { interviewer } from "@/constants";
 import { createFeedback } from "@/lib/actions/general.action";
+import { toast } from "sonner";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -56,7 +57,7 @@ const Agent = ({
     };
 
     const onError = (error: Error) => {
-      console.log("Error: ", error);
+      toast.error(`Error: ${error.message}`);
     };
 
     vapi.on("call-start", onCallStart);
@@ -87,7 +88,7 @@ const Agent = ({
       if (success && feedbackId) {
         router.push(`/interview/${interviewId}/feedback`);
       } else {
-        console.log("Error saving feedback");
+        toast.error("Eror saving feedback");
         router.push("/");
       }
     },
