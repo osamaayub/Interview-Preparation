@@ -113,7 +113,7 @@ const Agent = ({
         undefined,
         undefined,
         undefined,
-        process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+        process.env.NEXT_PUBLIC_VAPI_ASSISTANT!, {
          variableValues: {
            username: userName,
            userid: userId,
