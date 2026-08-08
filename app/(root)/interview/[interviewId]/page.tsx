@@ -8,8 +8,20 @@ import { getCurrentUser } from "@/lib/actions/auth.action";
 
 const Page = async ({ params }: RouteParams) => {
   const { interviewId } = await params;
+  
+  // Check interviewId first
+  if (!interviewId) {
+    redirect("/");
+  }
+
   const user = await getCurrentUser();
   const interview = await getInterviewById(interviewId);
+
+  // Check interview exists BEFORE destructuring
+  if (!interview) {
+    redirect("/");
+  }
+
   const {
     role,
     type,
@@ -17,10 +29,6 @@ const Page = async ({ params }: RouteParams) => {
     questions,
     userId,
   } = interview as Interview;
-
-  if (!interview) {
-    redirect("/");
-  }
 
   return (
     <>
