@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { vapi } from "@/lib/vapi.sdk";
@@ -16,7 +16,7 @@ enum CallStatus {
 }
 
 interface SavedMessage {
-  role: "user" | "system" | "assistent";
+  role: "user" | "system" | "assistant";
   content: string;
 }
 
@@ -38,8 +38,8 @@ const Agent = ({
     const onCallEnd = () => setCallStatus(CallStatus.FINISHED);
     const onMessage = (message: Message) => {
       if (message.type === "transcript" && message.transcriptType === "final") {
-        const newMessage = {
-          role: message.role,
+        const newMessage: SavedMessage = {
+          role: message.role === "assistant" ? "assistant" : message.role,
           content: message.transcript,
         };
 
@@ -76,34 +76,36 @@ const Agent = ({
     };
   }, []);
 
-  const handleGenerateFeedback = async(messages: SavedMessage[]) => {
-    console.log("Generate feedback here");
+  const handleGenerateFeedback = useCallback(
+    async (transcript: SavedMessage[]) => {
+      const { success, feedbackId } = await createFeedback({
+        interviewId: interviewId!,
+        userId: userId!,
+        transcript,
+      });
 
-    const { success, feedbackId } = await createFeedback({
-      interviewId: interviewId!,
-      userId: userId!,
-      transcript: messages
-    });
-
-    if (success && feedbackId) {
-      router.push(`/interview/${interviewId}/feedback`)
-    } else {
-      console.log("Error saving feedback");
-      router.push("/");
-    }
-  }
+      if (success && feedbackId) {
+        router.push(`/interview/${interviewId}/feedback`);
+      } else {
+        console.log("Error saving feedback");
+        router.push("/");
+      }
+    },
+    [interviewId, userId, router]
+  );
 
   useEffect(() => {
-    if(callStatus === CallStatus.FINISHED) {
-      if(type === "generate") {
-        router.push("/");
-      } else {
-        handleGenerateFeedback(messages);
-      }
-    }
-    
-  }, [messages, callStatus, type, userId]);
+    if (callStatus !== CallStatus.FINISHED) return;
 
+    if (type === "generate") {
+      router.push("/");
+      return;
+    }
+
+    if (messages.length > 0) {
+      handleGenerateFeedback(messages);
+    }
+  }, [callStatus, type, messages, handleGenerateFeedback, router]);
 
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
@@ -113,7 +115,7 @@ const Agent = ({
         undefined,
         undefined,
         undefined,
-        process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+        process.env.NEXT_PUBLIC_VAPI_ASSISTANT!, {
          variableValues: {
            username: userName,
            userid: userId,
