@@ -23,7 +23,7 @@ interface Feedback {
     userId: string;
     type: string;
     finalized: boolean;
-    coverImage: string; ///
+    coverImage: string; 
   }
   
   interface CreateFeedbackParams {
