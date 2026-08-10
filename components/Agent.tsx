@@ -192,7 +192,7 @@ const handleCall = async () => {
     return;
   }
 
-  const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT;
+  const assistantId = process.env.NEXT_PUBLIC_VAPI_WEB_TOKEN;
 
   if (!assistantId && type === "generate") {
     toast.error("VAPI assistant ID is missing.");
